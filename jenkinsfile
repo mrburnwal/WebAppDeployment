@@ -28,6 +28,8 @@ pipeline {
             }
         }
 
+
+
         stage('Tests') {
             parallel {
                 stage('Unit tests') {
@@ -77,6 +79,20 @@ pipeline {
                 }
             }
         }
+
+
+        stage("AWS S3 Deploy"){
+            docker {
+                image "amazon/aws-cli:latest"
+                args "--entrypoint ''"
+            }
+            steps{
+                sh '''
+                    aws s3 sync build s3://webappdevelopment-xyz 
+                '''
+            }
+        }
+
 
         stage('Deploy Staging and E2E Testing') {
             agent {
