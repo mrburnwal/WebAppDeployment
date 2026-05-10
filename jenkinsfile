@@ -82,9 +82,11 @@ pipeline {
 
 
         stage("AWS S3 Deploy"){
-            docker {
-                image "amazon/aws-cli:latest"
-                args "--entrypoint ''"
+            agent {
+                docker {
+                    image "amazon/aws-cli:latest"
+                    args "--entrypoint ''"
+                }
             }
             steps{
                 sh '''
