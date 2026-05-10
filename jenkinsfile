@@ -89,10 +89,12 @@ pipeline {
                     args "--entrypoint ''"
                 }
             }
-            steps{
-                sh '''
-                    aws s3 sync build s3://webappdevelopment-xyz 
-                '''
+            withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 's3-aws key', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                steps{
+                    sh '''
+                        aws s3 sync build s3://webappdevelopment-xyz 
+                    '''
+                }
             }
         }
 
