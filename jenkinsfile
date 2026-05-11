@@ -33,31 +33,33 @@ pipeline {
 
 
 
-stage("AWS S3 Deploy") {
-    agent {
-        docker {
-            image "amazon/aws-cli:latest"
-            reuseNode true
-            args "-r root --entrypoint ''"
-        }
-    }
+        stage("AWS S3 Deploy") {
+            agent {
+                docker {
+                    image "amazon/aws-cli:latest"
+                    reuseNode true
+                    args "-r root --entrypoint ''"
+                }
+            }
 
-    steps {
-        withCredentials([
-            aws(
-                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                credentialsId: 's3-aws key',
-                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-            )
-        ]) {
-            sh '''
-                aws --version
-                yum install jq -y
-                AWS_TD_REVISION=$(aws ecs register-task-definition --cli-input-json file://AWS-Resources/taskDefinition-prod.json | jq .taskDefinition.revision)
-                echo $AWS_TD_REVISION
-                aws ecs update-service --cluster webappdevelopment-cluster-prod --service webappdevelopemnt-service-prod --task-definition webappdevelopemnt-taskdefinition-prod:$AWS_TD_REVISION
+            steps {
+                withCredentials([
+                    aws(
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        credentialsId: 's3-aws key',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh '''
+                        aws --version
+                        yum install jq -y
+                        AWS_TD_REVISION=$(aws ecs register-task-definition --cli-input-json file://AWS-Resources/taskDefinition-prod.json | jq .taskDefinition.revision)
+                        echo $AWS_TD_REVISION
+                        aws ecs update-service --cluster webappdevelopment-cluster-prod --service webappdevelopemnt-service-prod --task-definition webappdevelopemnt-taskdefinition-prod:$AWS_TD_REVISION
 
-            '''
+                    '''
+                }
+            }
         }
     }
 }
