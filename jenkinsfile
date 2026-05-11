@@ -4,6 +4,7 @@ pipeline {
     environment {
         NETLIFY_PROJECT_ID = "1bcc6f8d-5e6d-4ce7-8169-7ad1ab42433e"
         NETLIFY_AUTH_TOKEN = credentials('netlify_webapp_token')
+        AWS_REGION = "us-east-1"
     }
 
     stages {
@@ -30,55 +31,6 @@ pipeline {
 
 
 
-        stage('Tests') {
-            parallel {
-                stage('Unit tests') {
-                    agent {
-                        docker {
-                            image 'my-playwirght'
-                            reuseNode true
-                            args "-e HOME=.cache"
-                        }
-                    }
-
-                    steps {
-                        sh '''
-                            test -f build/index.html
-                            npm test
-                        '''
-                    }
-                    post {
-                        always {
-                            junit 'test-results/junit.xml'
-                        }
-                    }
-                }
-
-                stage('E2E') {
-                    agent {
-                        docker {
-                            image 'my-playwirght'
-                            reuseNode true
-                            args "-e HOME=.cache"
-                        }
-                    }
-
-                    steps {
-                        sh '''
-                            serve -s build &
-                            sleep 10
-                            npx playwright test  --reporter=html
-                        '''
-                    }
-
-                    post {
-                        always {
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
-                        }
-                    }
-                }
-            }
-        }
 
 
 stage("AWS S3 Deploy") {
@@ -86,7 +38,7 @@ stage("AWS S3 Deploy") {
         docker {
             image "amazon/aws-cli:latest"
             reuseNode true
-            args "--entrypoint ''"
+            args "-r root --entrypoint ''"
         }
     }
 
@@ -99,99 +51,13 @@ stage("AWS S3 Deploy") {
             )
         ]) {
             sh '''
-                aws s3 sync build s3://webappdevelopment-xyz
+                aws --version
+                yum install jq -y
+                AWS_TD_REVISION=$(aws ecs register-task-definition --cli-input-json file://AWS-Resources/taskDefinition-prod.json | jq .taskDefinition.revision)
+                echo $AWS_TD_REVISION
+                aws ecs update-service --cluster webappdevelopment-cluster-prod --service webappdevelopemnt-service-prod --task-definition webappdevelopemnt-taskdefinition-prod:$AWS_TD_REVISION
+
             '''
-        }
-    }
-}
-
-
-        stage('Deploy Staging and E2E Testing') {
-            agent {
-                docker {
-                    image 'my-playwirght'
-                    reuseNode true
-                    args '-u root -e HOME=.cache'
-                }
-            }
-
-            // environment {
-            //     CI_ENVIRONMENT_URL = "${env.STAGING_URL}"
-            // }
-
-            steps {
-                sh '''
-                    netlify --version
-
-                    netlify link --id ${NETLIFY_PROJECT_ID}
-
-                    netlify status
-
-                    echo "deploying to staging environment....!"
-
-                    netlify deploy --dir=build --json > staging-url.json
-                    STAGING_URL=$(node-jq '.deploy_url' staging-url.json)
-
-                    CLEAN_URL=$(echo "$STAGING_URL" | tr -d '"')
-                    export CI_ENVIRONMENT_URL=$CLEAN_URL
-                    echo "Clean staging url: $CI_ENVIRONMENT_URL"
-                    npx playwright test --reporter=html
-                '''
-            }
-
-            post {
-                always {
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright E2E Staging Report', reportTitles: '', useWrapperFileDirectly: true])
-                }
-            }
-        }
-
-
-
-        stage('Approval Stage') {
-            steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    input message: 'Ready to Deploy?', ok: 'Yes, I want to continue.'
-                }
-            }
-        }
-
-        stage('Deploy Production and E2E Testing') {
-            agent {
-                docker {
-                    image 'my-playwirght'
-                    reuseNode true
-                    args '-u root -e HOME=.cache'
-                }
-            }
-
-            environment {
-                CI_ENVIRONMENT_URL = "https://grand-sprite-a334e6.netlify.app"
-            }
-
-            steps {
-                sh '''
-                    netlify --version
-
-                    echo "NETLIFY_PROJECT_ID: ${NETLIFY_PROJECT_ID}"
-                    echo "NETLIFY_AUTH_TOKEN: ${NETLIFY_AUTH_TOKEN}"
-
-                    netlify link --id ${NETLIFY_PROJECT_ID}
-
-                    netlify status
-
-                    echo "deploying to production environment....!"
-
-                    netlify deploy --dir=build --prod
-
-                    npx playwright test  --reporter=html
-                '''
-            }
-            post {
-                always {
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright E2E Production Report', reportTitles: '', useWrapperFileDirectly: true])
-                }
-            }
         }
     }
 }
