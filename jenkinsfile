@@ -14,7 +14,7 @@ pipeline {
                 docker {
                     image "amazon/aws-cli:latest"
                     reuseNode true
-                    args "-r root --entrypoint ''"
+                    args "-u root --entrypoint ''"
                 }
             }
 
