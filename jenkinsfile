@@ -9,6 +9,44 @@ pipeline {
 
     stages {
 
+        stage('Build') {
+            agent {
+                docker {
+                    image 'my-playwirght'
+                    reuseNode true
+                    args "-e HOME=.cache"
+                }
+            }
+            steps {
+                sh '''
+                    ls -la
+                    node --version
+                    npm --version
+                    npm ci
+                    npm run build
+                    ls -la
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            agent {
+                docker {
+                    image "amazon/aws-cli:latest"
+                    reuseNode true
+                    args "-u root --entrypoint ''"
+                }
+            }
+
+            steps {
+                sh '''
+                    amazon-linux-extras install docker -y
+                    service docker start
+                    docker build -t myjenkinsapp .   
+                '''
+            }
+        }
+
         stage("AWS ECS Deploy") {
             agent {
                 docker {
@@ -35,26 +73,6 @@ pipeline {
 
                     '''
                 }
-            }
-        }
-
-        stage('Build') {
-            agent {
-                docker {
-                    image 'my-playwirght'
-                    reuseNode true
-                    args "-e HOME=.cache"
-                }
-            }
-            steps {
-                sh '''
-                    ls -la
-                    node --version
-                    npm --version
-                    npm ci
-                    npm run build
-                    ls -la
-                '''
             }
         }
 
