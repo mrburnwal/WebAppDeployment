@@ -1,0 +1,5 @@
+FROM amazon/aws-cli:latest
+
+RUN yum install -y docker
+RUN yum install -y jq
+

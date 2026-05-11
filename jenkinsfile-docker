@@ -6,6 +6,7 @@ pipeline {
         stage("Docker Build") {
             steps {
                 sh "docker build -f ci/Dockerfile -t my-playwirght ."
+                sh "docker build -f ci/Dockerfile-AWS-CLI -t my-aws-cli ."
             }
         }
     }
