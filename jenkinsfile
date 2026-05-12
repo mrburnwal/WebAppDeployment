@@ -39,9 +39,19 @@ pipeline {
             }
 
             steps {
-                sh '''
-                    docker build -t myjenkinsapp .   
-                '''
+                withCredentials([
+                    aws(
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        credentialsId: 's3-aws key',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh '''
+                        docker build -t myjenkinsapp .
+                        aws ecr get-login-password | docker login --username AWS --password-stdin 535032367236.dkr.ecr.us-east-1.amazonaws.com
+                        docker push 535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp
+                    '''
+                }
             }
         }
 
