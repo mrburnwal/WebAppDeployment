@@ -3,7 +3,7 @@
     "containerDefinitions": [
         {
             "name": "webappdevelopemnt",
-            "image": "nginx:1.30",
+            "image": "535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp:##IMAGE_NUMBER_TAG##",
             "cpu": 0,
             "portMappings": [
                 {
@@ -21,6 +21,7 @@
         }
     ],
     "networkMode": "awsvpc",
+    "executionRoleArn": "arn:aws:iam::535032367236:role/ecsTaskExecutionRole",
     "volumes": [],
     "placementConstraints": [],
     "requiresCompatibilities": [

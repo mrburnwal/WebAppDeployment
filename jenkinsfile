@@ -52,7 +52,8 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        docker build -t 535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp:${BUILD_NUMBER} .
+                        docker build --platform linux/amd64 -t 535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp:${BUILD_NUMBER} .
+                        sed -i "s|##IMAGE_NUMBER_TAG##|${BUILD_NUMBER}|g" AWS-Resources/taskDefinition-prod.json
                         aws ecr get-login-password | docker login --username AWS --password-stdin 535032367236.dkr.ecr.us-east-1.amazonaws.com
                         docker push 535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp:${BUILD_NUMBER}
                     ''' 
