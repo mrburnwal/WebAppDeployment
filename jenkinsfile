@@ -5,10 +5,15 @@ pipeline {
         NETLIFY_PROJECT_ID = "1bcc6f8d-5e6d-4ce7-8169-7ad1ab42433e"
         NETLIFY_AUTH_TOKEN = credentials('netlify_webapp_token')
         AWS_DEFAULT_REGION = "us-east-1"
+        BUILD_NUMBER = "${env.BUILD_NUMBER}"
     }
 
     stages {
-
+        stage("Print Build Number") {
+            steps {
+                echo "Build Number: $BUILD_NUMBER"
+            }
+        }
         stage('Build') {
             agent {
                 docker {
@@ -47,10 +52,10 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        docker build -t myjenkinsapp .
+                        docker build -t 535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp .
                         aws ecr get-login-password | docker login --username AWS --password-stdin 535032367236.dkr.ecr.us-east-1.amazonaws.com
                         docker push 535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp
-                    '''
+                    ''' 
                 }
             }
         }
