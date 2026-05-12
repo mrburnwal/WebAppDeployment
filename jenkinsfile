@@ -52,9 +52,9 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        docker build -t 535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp .
+                        docker build -t 535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp:${BUILD_NUMBER} .
                         aws ecr get-login-password | docker login --username AWS --password-stdin 535032367236.dkr.ecr.us-east-1.amazonaws.com
-                        docker push 535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp
+                        docker push 535032367236.dkr.ecr.us-east-1.amazonaws.com/myjenkinsapp:${BUILD_NUMBER}
                     ''' 
                 }
             }
